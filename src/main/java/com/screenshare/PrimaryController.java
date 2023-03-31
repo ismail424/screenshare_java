@@ -1,6 +1,5 @@
 package com.screenshare;
 
-import java.awt.List;
 import java.io.IOException;
 import java.util.EnumSet;
 
@@ -48,7 +47,7 @@ public class PrimaryController {
 
 
 
-    private final ObservableList<String> screenIndexItems = FXCollections.observableArrayList(ScreenShare.getScreenNames());
+    private final ObservableList<String> screenIndexItems = FXCollections.observableArrayList(Backend.getScreenNames());
     private final ObservableList<Resolution> resolutionItems = FXCollections.observableArrayList(EnumSet.allOf(Resolution.class));
     private final ObservableList<QualityLevel> qualityLevelItems = FXCollections.observableArrayList(EnumSet.allOf(QualityLevel.class));
 
@@ -70,7 +69,7 @@ public class PrimaryController {
         selcectionQuality.setItems(qualityLevelItems); // LOW, MEDIUM, HIGH
         SelectScreenIndex.setItems(screenIndexItems);
         
-        SelectScreenIndex.setValue(ScreenShare.getScreenNames()[screenIndex]);
+        SelectScreenIndex.setValue(Backend.getScreenNames()[screenIndex]);
         selcectionQuality.setValue(qualityLevel);
         selectResolution.setValue(resolution);
 
@@ -93,7 +92,7 @@ public class PrimaryController {
         });
 
         try {
-            String publicIPAddress = ScreenShare.getPublicIPAddress();
+            String publicIPAddress = Backend.getPublicIPAddress();
             System.out.println("Public IP Address: " + publicIPAddress);
             String route_url = "http://" + publicIPAddress + ":5500/screen/image";
             urlLink.setText(route_url);

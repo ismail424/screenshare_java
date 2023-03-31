@@ -1,135 +1,81 @@
 package com.screenshare;
+import javafx.application.Application;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+import spark.Spark;
 
-import java.awt.AWTException;
-import java.awt.Dimension;
-import java.awt.DisplayMode;
-import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Image;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.Base64;
-import java.util.Iterator;
+import static spark.Spark.get;
+import static spark.Spark.port;
+import static spark.Spark.awaitInitialization;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageWriteParam;
-import javax.imageio.ImageWriter;
-import javax.imageio.stream.ImageOutputStream;
+public class ScreenShare extends Application {
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
+    private static Scene scene;
 
-public class ScreenShare {
+    @Override
+    public void start(Stage stage) throws IOException {
+        scene = new Scene(loadFXML("main"), 400, 300);
+        stage.setScene(scene);
+        stage.show();
+        stage.setTitle("Screen Share");
+        stage.setResizable(false);
+        // Start the HTTP API server
+        startApiServer();
+    }
 
+    private static Parent loadFXML(String fxml) throws IOException {
+        FXMLLoader fxmlLoader = new FXMLLoader(ScreenShare.class.getResource(fxml + ".fxml"));
+        return fxmlLoader.load();
+    }
 
-    public static byte[] captureAndCompressScreenImage(int screenIndex, float compressionLevel, int maxWidth, int maxHeight) throws AWTException, IOException {
-        Robot robot = new Robot();
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] screenDevices = ge.getScreenDevices();
+    private void startApiServer() {
+        port(5500);
 
-        if (screenIndex < 0 || screenIndex >= screenDevices.length) {
-            throw new IllegalArgumentException("Invalid screen index: " + screenIndex);
+        try{
+            init();
+        }
+        catch(Exception e){
+            System.out.println("Error: " + e);
         }
 
-        GraphicsDevice screenDevice = screenDevices[screenIndex];
-        Rectangle screenRect = screenDevice.getDefaultConfiguration().getBounds();
+        get("/screen", (req, res) -> {
+            res.type("text/plain"); // Set the response type to text/plain
+            
+            int screenIndex = PrimaryController.screenIndex;
+            float compressionLevel = PrimaryController.qualityLevel.getValue();
+            int maxWidth = PrimaryController.resolution.getWidth();
+            int maxHeight = PrimaryController.resolution.getHeight();
 
-        BufferedImage screenCapture = robot.createScreenCapture(screenRect);
+            String base64Image = Backend.captureAndCompressScreenBase64(screenIndex, compressionLevel, maxWidth, maxHeight);
+            return base64Image;
+        });
 
-        // Resize the image
-        Dimension newSize = getScaledDimension(new Dimension(screenCapture.getWidth(), screenCapture.getHeight()), new Dimension(maxWidth, maxHeight));
-        BufferedImage resizedImage = new BufferedImage(newSize.width, newSize.height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D graphics2D = resizedImage.createGraphics();
-        graphics2D.drawImage(screenCapture.getScaledInstance(newSize.width, newSize.height, Image.SCALE_SMOOTH), 0, 0, null);
-        graphics2D.dispose();
+        get("/screen/image", (req, res) -> {
+            res.type("image/jpeg"); // Set the response type to image/jpeg
 
-        // Save as JPEG with custom quality
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpeg");
-        ImageWriter writer = writers.next();
-        ImageOutputStream imageOutputStream = ImageIO.createImageOutputStream(byteArrayOutputStream);
-        writer.setOutput(imageOutputStream);
-        ImageWriteParam param = writer.getDefaultWriteParam();
-        param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-        param.setCompressionQuality(compressionLevel);
-        writer.write(null, new javax.imageio.IIOImage(resizedImage, null, null), param);
-        imageOutputStream.close();
-        return byteArrayOutputStream.toByteArray();
+            int screenIndex = PrimaryController.screenIndex;
+            float compressionLevel = PrimaryController.qualityLevel.getValue();
+            int maxWidth = PrimaryController.resolution.getWidth();
+            int maxHeight = PrimaryController.resolution.getHeight();
+
+            byte[] image = Backend.captureAndCompressScreenImage(screenIndex, compressionLevel, maxWidth, maxHeight);
+            return image;
+
+        });
+
+        // Update the UI with the API server status
+        awaitInitialization();
     }
 
-    public static String captureAndCompressScreenBase64(int screenIndex, float compressionLevel, int maxWidth, int maxHeight) throws AWTException, IOException {
-        byte[] image = captureAndCompressScreenImage(screenIndex, compressionLevel, maxWidth, maxHeight);
-        String base64Image = Base64.getEncoder().encodeToString(image);
-        return base64Image;
+    @Override
+    public void stop() {
+        stopApiServer();
     }
 
-    // Helper method to calculate new dimensions while maintaining the aspect ratio
-    private static Dimension getScaledDimension(Dimension imageSize, Dimension boundary) {
-        int originalWidth = imageSize.width;
-        int originalHeight = imageSize.height;
-        int boundWidth = boundary.width;
-        int boundHeight = boundary.height;
-        int newWidth = originalWidth;
-        int newHeight = originalHeight;
-    
-        if (originalWidth > boundWidth) {
-            newWidth = boundWidth;
-            newHeight = (newWidth * originalHeight) / originalWidth;
-        }
-    
-        if (newHeight > boundHeight) {
-            newHeight = boundHeight;
-            newWidth = (newHeight * originalWidth) / originalHeight;
-        }
-    
-        return new Dimension(newWidth, newHeight);
+    private void stopApiServer() {
+        Spark.stop();
     }
-
-    // Array with all the screen devices
-    public static GraphicsDevice[] getScreenDevices() {
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] screenDevices = ge.getScreenDevices();
-        return screenDevices;
-    }
-
-
-    public static String[] getScreenNames() {
-        GraphicsDevice[] screenDevices = getScreenDevices();
-        String[] screenNames = new String[screenDevices.length];
-        for (int i = 0; i < screenDevices.length; i++) {
-            String screenInfo = String.format("Display %d", i + 1);
-            screenNames[i] = screenInfo;
-        }
-        return screenNames;
-    }
-
-    public static String getPublicIPAddress() throws IOException {
-        URL url = new URL("https://api.ipify.org");
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-
-            BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            String inputLine;
-            StringBuilder content = new StringBuilder();
-            while ((inputLine = in.readLine()) != null) {
-                content.append(inputLine);
-            }
-            in.close();
-            connection.disconnect();
-            return content.toString();
-        } else {
-            throw new IOException("Failed to get public IP address. HTTP response code: " + responseCode);
-        }
-    }
-   
 }
