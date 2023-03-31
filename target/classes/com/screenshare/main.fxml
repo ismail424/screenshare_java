@@ -1,16 +1,64 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
 
 
-<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="300.0" style="-fx-background-color: #333;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.screenshare.PrimaryController">
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="300.0" prefWidth="400.0" style="-fx-background-color: #333;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.screenshare.PrimaryController">
    <children>
-      <VBox layoutX="67.0" layoutY="57.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+      <VBox layoutX="67.0" layoutY="57.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
          <children>
-            <Label fx:id="url" alignment="CENTER" maxWidth="1.7976931348623157E308" text="Label" textAlignment="CENTER" textFill="WHITE" VBox.vgrow="ALWAYS" />
+            <Label fx:id="url1" alignment="CENTER" maxWidth="1.7976931348623157E308" prefHeight="66.0" prefWidth="380.0" text="Screen Share" textAlignment="CENTER" textFill="WHITE">
+               <font>
+                  <Font name="Hack Bold" size="28.0" />
+               </font>
+            </Label>
+            <HBox alignment="CENTER" prefHeight="50.0">
+               <children>
+                  <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Select Screen:" wrappingWidth="107.13000106811523">
+                     <font>
+                        <Font name="Hack Regular" size="12.0" />
+                     </font>
+                  </Text>
+                  <ChoiceBox fx:id="SelectScreenIndex" maxWidth="1.7976931348623157E308" prefHeight="27.0" prefWidth="250.0" style="-fx-background-color: #eee; -fx-background-radius: 3;" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" prefHeight="50.0" prefWidth="300.0">
+               <children>
+                  <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Quality:" wrappingWidth="107.13000106811523">
+                     <font>
+                        <Font name="Hack Regular" size="12.0" />
+                     </font>
+                  </Text>
+                  <ChoiceBox fx:id="selcectionQuality" maxWidth="1.7976931348623157E308" prefHeight="27.0" prefWidth="250.0" style="-fx-background-color: #eee; -fx-background-radius: 3;" />
+               </children>
+            </HBox>
+            <HBox alignment="CENTER" prefHeight="50.0" prefWidth="300.0">
+               <children>
+                  <Text fill="WHITE" strokeType="OUTSIDE" strokeWidth="0.0" text="Resolution:" wrappingWidth="107.13000106811523">
+                     <font>
+                        <Font name="Hack Regular" size="12.0" />
+                     </font>
+                  </Text>
+                  <ChoiceBox fx:id="selectResolution" maxWidth="1.7976931348623157E308" prefHeight="27.0" prefWidth="250.0" style="-fx-background-color: #eee; -fx-background-radius: 3;" />
+               </children>
+            </HBox>
+            <Label fx:id="urlLink" alignment="CENTER" maxWidth="1.7976931348623157E308" onMouseClicked="#copyToClipboard" prefHeight="35.0" prefWidth="380.0" style="-fx-cursor: hand;" text="Link Here" textFill="#2680ff">
+               <font>
+                  <Font name="Hack Regular" size="13.0" />
+               </font>
+            </Label>
+            <Label fx:id="url2" alignment="CENTER" maxWidth="1.7976931348623157E308" prefHeight="49.0" prefWidth="300.0" text="By: Ismail424, oKenz" textAlignment="CENTER" textFill="WHITE" />
          </children>
+         <padding>
+            <Insets left="10.0" right="10.0" />
+         </padding>
       </VBox>
    </children>
 </AnchorPane>
