@@ -1,7 +1,6 @@
 # Screen Share 
 This is a simple screen sharing application that captures a screenshot the screen and serves it with a simple HTTP local server.
 
-# Demo
 ![Demo](screenshot.png)
 
 
