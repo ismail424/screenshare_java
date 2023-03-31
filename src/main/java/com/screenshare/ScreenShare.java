@@ -21,6 +21,7 @@ public class ScreenShare extends Application {
         stage.setScene(scene);
         stage.show();
         stage.setTitle("Screen Share");
+        stage.getIcons().add(new javafx.scene.image.Image(ScreenShare.class.getResource("icon.png").toExternalForm()));
         stage.setResizable(false);
         // Start the HTTP API server
         startApiServer();
