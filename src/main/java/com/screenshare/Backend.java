@@ -7,6 +7,7 @@ import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Robot;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -26,8 +27,8 @@ import java.net.URL;
 
 public class Backend {
 
-
-    public static byte[] captureAndCompressScreenImage(int screenIndex, float compressionLevel, int maxWidth, int maxHeight) throws AWTException, IOException {
+    public static byte[] captureAndCompressScreenImage(int screenIndex, float compressionLevel, int maxWidth,
+            int maxHeight) throws AWTException, IOException {
         Robot robot = new Robot();
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] screenDevices = ge.getScreenDevices();
@@ -42,10 +43,12 @@ public class Backend {
         BufferedImage screenCapture = robot.createScreenCapture(screenRect);
 
         // Resize the image
-        Dimension newSize = getScaledDimension(new Dimension(screenCapture.getWidth(), screenCapture.getHeight()), new Dimension(maxWidth, maxHeight));
+        Dimension newSize = getScaledDimension(new Dimension(screenCapture.getWidth(), screenCapture.getHeight()),
+                new Dimension(maxWidth, maxHeight));
         BufferedImage resizedImage = new BufferedImage(newSize.width, newSize.height, BufferedImage.TYPE_INT_RGB);
         Graphics2D graphics2D = resizedImage.createGraphics();
-        graphics2D.drawImage(screenCapture.getScaledInstance(newSize.width, newSize.height, Image.SCALE_SMOOTH), 0, 0, null);
+        graphics2D.drawImage(screenCapture.getScaledInstance(newSize.width, newSize.height, Image.SCALE_SMOOTH), 0, 0,
+                null);
         graphics2D.dispose();
 
         // Save as JPEG with custom quality
@@ -62,10 +65,71 @@ public class Backend {
         return byteArrayOutputStream.toByteArray();
     }
 
-    public static String captureAndCompressScreenBase64(int screenIndex, float compressionLevel, int maxWidth, int maxHeight) throws AWTException, IOException {
+    public static String captureAndCompressScreenBase64(int screenIndex, float compressionLevel, int maxWidth,
+            int maxHeight) throws AWTException, IOException {
         byte[] image = captureAndCompressScreenImage(screenIndex, compressionLevel, maxWidth, maxHeight);
         String base64Image = Base64.getEncoder().encodeToString(image);
         return base64Image;
+    }
+
+    public static byte[] compressRLE(byte[] data) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        int count;
+        for (int i = 0; i < data.length; i++) {
+            count = 1;
+            while (i + 1 < data.length && data[i] == data[i + 1]) {
+                count++;
+                i++;
+            }
+
+            outputStream.write(count);
+            outputStream.write(data[i]);
+        }
+
+        return outputStream.toByteArray();
+    }
+
+    public static String[][] screenToPixels(int screenIndex, int maxWidth, int maxHeight)
+            throws AWTException, IOException {
+        // 1. Capture the screen
+        Robot robot = new Robot();
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        GraphicsDevice[] screenDevices = ge.getScreenDevices();
+        if (screenIndex < 0 || screenIndex >= screenDevices.length) {
+            throw new IllegalArgumentException("Invalid screen index: " + screenIndex);
+        }
+        GraphicsDevice screenDevice = screenDevices[screenIndex];
+        Rectangle screenRect = screenDevice.getDefaultConfiguration().getBounds();
+        BufferedImage screenCapture = robot.createScreenCapture(screenRect);
+
+        // 2. Resize the image to maxWidth x maxHeight
+        int width = screenCapture.getWidth();
+        int height = screenCapture.getHeight();
+        if (width > maxWidth || height > maxHeight) {
+            double widthRatio = (double) maxWidth / width;
+            double heightRatio = (double) maxHeight / height;
+            double scaleFactor = Math.min(widthRatio, heightRatio);
+            width = (int) (width * scaleFactor);
+            height = (int) (height * scaleFactor);
+        }
+        BufferedImage resizedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics2D = resizedImage.createGraphics();
+        graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        graphics2D.drawImage(screenCapture, 0, 0, width, height, null);
+        graphics2D.dispose();
+
+        // 3. Convert BufferedImage to a 2D string array containing hexadecimal values
+        String[][] result = new String[height][width];
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int pixel = resizedImage.getRGB(x, y);
+                String hexValue = String.format("%06X", (0xFFFFFF & pixel));
+                result[y][x] = hexValue;
+            }
+        }
+
+        return result;
     }
 
     // Helper method to calculate new dimensions while maintaining the aspect ratio
@@ -76,17 +140,17 @@ public class Backend {
         int boundHeight = boundary.height;
         int newWidth = originalWidth;
         int newHeight = originalHeight;
-    
+
         if (originalWidth > boundWidth) {
             newWidth = boundWidth;
             newHeight = (newWidth * originalHeight) / originalWidth;
         }
-    
+
         if (newHeight > boundHeight) {
             newHeight = boundHeight;
             newWidth = (newHeight * originalWidth) / originalHeight;
         }
-    
+
         return new Dimension(newWidth, newHeight);
     }
 
@@ -96,7 +160,6 @@ public class Backend {
         GraphicsDevice[] screenDevices = ge.getScreenDevices();
         return screenDevices;
     }
-
 
     public static String[] getScreenNames() {
         GraphicsDevice[] screenDevices = getScreenDevices();
@@ -129,5 +192,5 @@ public class Backend {
             throw new IOException("Failed to get public IP address. HTTP response code: " + responseCode);
         }
     }
-   
+
 }

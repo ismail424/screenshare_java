@@ -1,4 +1,5 @@
 package com.screenshare;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -6,10 +7,16 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import spark.Spark;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Base64;
+import java.util.zip.GZIPOutputStream;
+
 import static spark.Spark.get;
 import static spark.Spark.port;
 import static spark.Spark.awaitInitialization;
+
+import com.google.gson.Gson;
 
 public class ScreenShare extends Application {
 
@@ -35,23 +42,21 @@ public class ScreenShare extends Application {
     private void startApiServer() {
         port(5500);
 
-        try{
+        try {
             init();
-        }
-        catch(Exception e){
+        } catch (Exception e) {
             System.out.println("Error: " + e);
         }
 
         get("/screen", (req, res) -> {
-            res.type("text/plain"); // Set the response type to text/plain
-            
-            int screenIndex = PrimaryController.screenIndex;
-            float compressionLevel = PrimaryController.qualityLevel.getValue();
-            int maxWidth = PrimaryController.resolution.getWidth();
-            int maxHeight = PrimaryController.resolution.getHeight();
+            res.type("application/json"); // Set the response type to JSON
 
-            String base64Image = Backend.captureAndCompressScreenBase64(screenIndex, compressionLevel, maxWidth, maxHeight);
-            return base64Image;
+            int screenIndex = PrimaryController.screenIndex;
+            String[][] pixels = Backend.screenToPixels(screenIndex, 192, 108);
+            Gson gson = new Gson();
+            String json = gson.toJson(pixels);
+
+            return json;
         });
 
         get("/screen/image", (req, res) -> {
