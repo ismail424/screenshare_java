@@ -30,7 +30,7 @@ public class PrimaryController {
     }
 
     public enum Resolution {
-        LOW(640, 480), MEDIUM(1280, 720), HIGH(1920, 1080);
+        LOW(192, 108), MEDIUM(240, 135), HIGH(350, 210);
 
         private final int width;
         private final int heigth;

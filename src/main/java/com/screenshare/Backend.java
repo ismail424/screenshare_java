@@ -30,16 +30,8 @@ public class Backend {
     public static byte[] captureAndCompressScreenImage(int screenIndex, float compressionLevel, int maxWidth,
             int maxHeight) throws AWTException, IOException {
         Robot robot = new Robot();
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] screenDevices = ge.getScreenDevices();
-
-        if (screenIndex < 0 || screenIndex >= screenDevices.length) {
-            throw new IllegalArgumentException("Invalid screen index: " + screenIndex);
-        }
-
-        GraphicsDevice screenDevice = screenDevices[screenIndex];
+        GraphicsDevice screenDevice = Backend.getScreenDeviceByIndex(screenIndex);
         Rectangle screenRect = screenDevice.getDefaultConfiguration().getBounds();
-
         BufferedImage screenCapture = robot.createScreenCapture(screenRect);
 
         // Resize the image
@@ -94,12 +86,7 @@ public class Backend {
             throws AWTException, IOException {
         // 1. Capture the screen
         Robot robot = new Robot();
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-        GraphicsDevice[] screenDevices = ge.getScreenDevices();
-        if (screenIndex < 0 || screenIndex >= screenDevices.length) {
-            throw new IllegalArgumentException("Invalid screen index: " + screenIndex);
-        }
-        GraphicsDevice screenDevice = screenDevices[screenIndex];
+        GraphicsDevice screenDevice = Backend.getScreenDeviceByIndex(screenIndex);
         Rectangle screenRect = screenDevice.getDefaultConfiguration().getBounds();
         BufferedImage screenCapture = robot.createScreenCapture(screenRect);
 
@@ -155,10 +142,20 @@ public class Backend {
     }
 
     // Array with all the screen devices
-    public static GraphicsDevice[] getScreenDevices() {
+    private static GraphicsDevice[] getScreenDevices() {
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] screenDevices = ge.getScreenDevices();
+
         return screenDevices;
+    }
+
+    private static GraphicsDevice getScreenDeviceByIndex(int screenIndex) {
+        GraphicsDevice[] screenDevices = getScreenDevices();
+        if (screenIndex < 0 || screenIndex >= screenDevices.length) {
+            throw new IllegalArgumentException("Invalid screen index: " + screenIndex);
+        }
+        GraphicsDevice screenDevice = screenDevices[screenIndex];
+        return screenDevice;
     }
 
     public static String[] getScreenNames() {
