@@ -13,8 +13,10 @@ This is a simple screen sharing application that captures a screenshot the scree
 
 
 ## Routes
+- `/screen/image/base64` - Returns the image of the screen in base64
 - `/screen/image` - Returns the image of the screen
-- `/screen` - Returns base64 image of the screen
+- `/screen` - Returns pixel data of the screen
+
 
 ## Author
 - [Ismail424](https://github.com/ismail424)
